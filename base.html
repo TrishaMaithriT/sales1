@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}SalesCast{% endblock %} — AI Sales Forecasting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  {% block extra_head %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="{{ url_for('home') }}" class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
+      <span>Sales<span class="brand-accent">Cast</span></span>
+    </a>
+
+    <ul class="nav-links" id="navLinks">
+      <li><a href="{{ url_for('home') }}"        class="nav-link {% if active=='home' %}active{% endif %}"><i class="fa-solid fa-house"></i> Home</a></li>
+      <li><a href="{{ url_for('upload_page') }}" class="nav-link {% if active=='upload' %}active{% endif %}"><i class="fa-solid fa-file-csv"></i> Upload Data</a></li>
+      <li><a href="{{ url_for('dashboard') }}"   class="nav-link {% if active=='dashboard' %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+      <li><a href="{{ url_for('forecast_page') }}"class="nav-link {% if active=='forecast' %}active{% endif %}"><i class="fa-solid fa-wand-magic-sparkles"></i> Forecast</a></li>
+      <li><a href="{{ url_for('about') }}"       class="nav-link {% if active=='about' %}active{% endif %}"><i class="fa-solid fa-circle-info"></i> About</a></li>
+    </ul>
+
+    <div class="nav-right">
+      {% if active != 'upload' %}
+      <a href="{{ url_for('upload_page') }}" class="btn-nav">Get Started <i class="fa-solid fa-arrow-right"></i></a>
+      {% endif %}
+      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+
+  <div class="mobile-nav" id="mobileNav">
+    <a href="{{ url_for('home') }}"         class="mob-link">Home</a>
+    <a href="{{ url_for('upload_page') }}"  class="mob-link">Upload Data</a>
+    <a href="{{ url_for('dashboard') }}"    class="mob-link">Dashboard</a>
+    <a href="{{ url_for('forecast_page') }}"class="mob-link">Forecast</a>
+    <a href="{{ url_for('about') }}"        class="mob-link">About</a>
+  </div>
+</nav>
+
+<!-- ══ PAGE CONTENT ══ -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ══ FOOTER ══ -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="brand" style="margin-bottom:10px">
+          <div class="brand-icon"><i class="fa-solid fa-chart-line"></i></div>
+          <span style="font-size:18px;font-weight:800;color:#fff">Sales<span class="brand-accent">Cast</span></span>
+        </div>
+        <p style="color:rgba(255,255,255,.5);font-size:13px;max-width:220px;line-height:1.6">
+          AI-powered sales forecasting using Linear Regression for modern businesses.
+        </p>
+        <div class="footer-socials">
+          <a href="#"><i class="fa-brands fa-github"></i></a>
+          <a href="#"><i class="fa-brands fa-linkedin"></i></a>
+          <a href="#"><i class="fa-brands fa-twitter"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Pages</h4>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('upload_page') }}">Upload Data</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('forecast_page') }}">Forecast</a>
+        <a href="{{ url_for('about') }}">About</a>
+      </div>
+      <div class="footer-col">
+        <h4>Technology</h4>
+        <a href="#">Python 3.12</a>
+        <a href="#">Flask Framework</a>
+        <a href="#">Scikit-learn</a>
+        <a href="#">Chart.js 4</a>
+        <a href="#">Pandas / NumPy</a>
+      </div>
+      <div class="footer-col">
+        <h4>ML Model</h4>
+        <a href="#">Linear Regression</a>
+        <a href="#">Lag Features (3)</a>
+        <a href="#">Rolling Mean</a>
+        <a href="#">MinMax Scaling</a>
+        <a href="#">R² Accuracy Metric</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2024 SalesCast AI &mdash; Sales Prediction System</span>
+      <span>Built with <i class="fa-brands fa-python"></i> Python &bull; <i class="fa-solid fa-flask"></i> Flask &bull; <i class="fa-solid fa-brain"></i> ML</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div id="toastBox"></div>
+
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+  });
+  // Hamburger
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileNav').classList.toggle('open');
+  });
+  // Toast helper
+  function showToast(msg, isError=false){
+    const box = document.getElementById('toastBox');
+    const t = document.createElement('div');
+    t.className = 'toast' + (isError?' toast-err':'');
+    t.innerHTML = `<i class="fa-solid ${isError?'fa-circle-xmark':'fa-circle-check'}"></i><span>${msg}</span>`;
+    box.appendChild(t);
+    setTimeout(()=>t.remove(), 4500);
+  }
+  // Format numbers
+  function fmtNum(n){
+    if(n==null||isNaN(n)) return '—';
+    if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+'M';
+    if(Math.abs(n)>=1e3) return (n/1e3).toFixed(1)+'K';
+    return (+n).toFixed(2);
+  }
+  function fmtTick(v){
+    if(Math.abs(v)>=1e6) return (v/1e6).toFixed(1)+'M';
+    if(Math.abs(v)>=1e3) return (v/1e3).toFixed(0)+'K';
+    return v;
+  }
+  function hexA(hex,a){
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function lerpClr(a,b,t){
+    const ar=parseInt(a.slice(1,3),16),ag=parseInt(a.slice(3,5),16),ab=parseInt(a.slice(5,7),16);
+    const br=parseInt(b.slice(1,3),16),bg=parseInt(b.slice(3,5),16),bb=parseInt(b.slice(5,7),16);
+    return `rgb(${Math.round(ar+(br-ar)*t)},${Math.round(ag+(bg-ag)*t)},${Math.round(ab+(bb-ab)*t)})`;
+  }
+  if(typeof Chart !== 'undefined'){
+    Chart.defaults.font.family="'Inter',system-ui,sans-serif";
+    Chart.defaults.font.size=12;
+    Chart.defaults.color="#64748b";
+  }
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

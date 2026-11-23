@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Sales Forecast{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero blue-hero">
+  <div class="container">
+    <span class="eyebrow light">Step 3 of 3</span>
+    <h1>Future Sales Forecast</h1>
+    <p>Choose how many months ahead you want to predict and generate your forecast instantly.</p>
+  </div>
+</div>
+
+<section class="section bg-gray">
+  <div class="container">
+
+    {% if metrics %}
+    <div class="model-status-bar">
+      <i class="fa-solid fa-circle-check"></i>
+      Model is ready &mdash; R² Score: <strong>{{ metrics.r2 }}%</strong> &bull; MAE: <strong>{{ metrics.mae }}</strong>
+      <a href="{{ url_for('upload_page') }}" style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.7)">Retrain with new data</a>
+    </div>
+    {% endif %}
+
+    <!-- ── Forecast Control ── -->
+    <div class="card fc-ctrl-card">
+      <div class="card-hdr">
+        <div class="card-ico blue"><i class="fa-solid fa-sliders"></i></div>
+        <div><h3 class="card-ttl">Forecast Configuration</h3><p class="card-sub">Select forecast horizon and generate predictions</p></div>
+      </div>
+      <div class="fc-ctrl-row">
+        <div class="fc-slider-wrap">
+          <label class="fc-lbl">Forecast Period: <strong id="sliderVal">6 months</strong></label>
+          <input type="range" id="monthSlider" min="1" max="24" value="6"
+                 oninput="document.getElementById('sliderVal').textContent=this.value+' months'"/>
+          <div class="slider-ticks"><span>1 mo</span><span>6</span><span>12</span><span>18</span><span>24 mo</span></div>
+        </div>
+        <button class="btn btn-primary btn-forecast" onclick="runForecast()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Forecast
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Forecast Charts (shown after generation) ── -->
+    <div id="fcResults" style="display:none">
+
+      <!-- Forecast KPIs -->
+      <div class="kpi-row" id="fcKpis" style="margin-bottom:24px">
+        <div class="kpi blue">
+          <div class="kpi-top"><span class="kpi-lbl">Next Month Forecast</span><div class="kpi-ico"><i class="fa-solid fa-calendar-day"></i></div></div>
+          <p class="kpi-val" id="fc1">—</p><p class="kpi-sub" id="fc1lbl">—</p>
+        </div>
+        <div class="kpi green">
+          <div class="kpi-top"><span class="kpi-lbl">Peak Forecast Month</span><div class="kpi-ico green"><i class="fa-solid fa-trophy"></i></div></div>
+          <p class="kpi-val" id="fcPeak">—</p><p class="kpi-sub" id="fcPeakLbl">—</p>
+        </div>
+        <div class="kpi purple">
+          <div class="kpi-top"><span class="kpi-lbl">Total Forecast Revenue</span><div class="kpi-ico purple"><i class="fa-solid fa-coins"></i></div></div>
+          <p class="kpi-val" id="fcTotal">—</p><p class="kpi-sub" id="fcTotalLbl">—</p>
+        </div>
+        <div class="kpi orange">
+          <div class="kpi-top"><span class="kpi-lbl">Avg Monthly Forecast</span><div class="kpi-ico orange"><i class="fa-solid fa-calculator"></i></div></div>
+          <p class="kpi-val" id="fcAvg">—</p><p class="kpi-sub">Per month average</p>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="card chart-card">
+          <div class="card-hdr">
+            <div class="card-ico orange"><i class="fa-solid fa-chart-bar"></i></div>
+            <div><h3 class="card-ttl">Monthly Forecast</h3><p class="card-sub">Predicted sales per month</p></div>
+            <span class="cbadge orange">Forecast</span>
+          </div>
+          <div class="chart-box"><canvas id="barChart"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-hdr">
+            <div class="card-ico pink"><i class="fa-solid fa-chart-area"></i></div>
+            <div><h3 class="card-ttl">Historical + Forecast</h3><p class="card-sub">Full timeline view</p></div>
+            <span class="cbadge pink">Combined</span>
+          </div>
+          <div class="chart-box"><canvas id="combChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ── Monthly Prediction Table ── -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-ico teal"><i class="fa-solid fa-table-list"></i></div>
+          <div><h3 class="card-ttl">Monthly Prediction Table</h3><p class="card-sub">Detailed forecast breakdown</p></div>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="fa-solid fa-download"></i> Export CSV</button>
+        </div>
+        <div class="tbl-scroll">
+          <table class="pred-table">
+            <thead>
+              <tr><th>#</th><th>Month</th><th>Predicted Sales</th><th>Change</th><th>Trend</th><th>vs Max</th></tr>
+            </thead>
+            <tbody id="predTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let _fcData = null;
+// Historical data injected server-side — no fetch needed
+const _fullActual = {{ full_actual | tojson }};
+let barC=null, combC=null;
+const GRID='rgba(0,0,0,0.04)';
+
+async function runForecast(){
+  const months=parseInt(document.getElementById('monthSlider').value);
+  const btn=document.querySelector('.btn-forecast');
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+  const res=await fetch('/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({months})});
+  const data=await res.json();
+  btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Forecast';
+
+  if(!res.ok||data.error){ showToast(data.error||'Forecast failed.',true); return; }
+  _fcData=data;
+
+  // Update KPIs
+  const preds=data.predictions, lbls=data.labels;
+  document.getElementById('fc1').textContent    = fmtNum(preds[0]);
+  document.getElementById('fc1lbl').textContent = lbls[0];
+  const pi=preds.indexOf(Math.max(...preds));
+  document.getElementById('fcPeak').textContent    = fmtNum(preds[pi]);
+  document.getElementById('fcPeakLbl').textContent = lbls[pi];
+  document.getElementById('fcTotal').textContent   = fmtNum(preds.reduce((a,b)=>a+b,0));
+  document.getElementById('fcAvg').textContent     = fmtNum(preds.reduce((a,b)=>a+b,0)/preds.length);
+
+  document.getElementById('fcResults').style.display='block';
+
+  drawBar(data); drawCombined(data); buildTable(data);
+  showToast('Forecast for '+months+' months generated!');
+  document.getElementById('fcResults').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function drawBar(data){
+  if(barC) barC.destroy();
+  barC=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels:data.labels,datasets:[{
+      label:'Predicted Sales',data:data.predictions,
+      backgroundColor:data.labels.map((_,i)=>lerpClr('#2563eb','#ec4899',i/(data.labels.length-1||1))),
+      borderRadius:7,borderSkipped:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'rgba(15,23,42,.95)',titleColor:'#f8fafc',bodyColor:'#94a3b8',
+        padding:12,cornerRadius:8,callbacks:{label:c=>'  Forecast: '+fmtNum(c.parsed.y)}
+      }},
+      scales:{x:{grid:{color:GRID}},y:{grid:{color:GRID},ticks:{callback:fmtTick},beginAtZero:false}}
+    }
+  });
+}
+
+function drawCombined(data){
+  if(combC) combC.destroy();
+  // Try to get historical data from session
+  const histVals = _fullActual ? _fullActual.values : [];
+  const histLbls = _fullActual ? _fullActual.labels : [];
+  const allLbls  = [...histLbls,...data.labels];
+
+  combC=new Chart(document.getElementById('combChart'),{
+    type:'line',
+    data:{labels:allLbls,datasets:[
+      {label:'Historical',data:[...histVals,...Array(data.labels.length).fill(null)],
+        borderColor:'#2563eb',backgroundColor:hexA('#2563eb',.07),fill:true,tension:.4,borderWidth:2.5,pointRadius:0},
+      {label:'Forecast',data:[...Array(histLbls.length).fill(null),...data.predictions],
+        borderColor:'#ec4899',backgroundColor:hexA('#ec4899',.1),fill:true,tension:.4,borderWidth:2.5,borderDash:[5,3],pointRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{usePointStyle:true,padding:14}},tooltip:{
+        backgroundColor:'rgba(15,23,42,.95)',titleColor:'#f8fafc',bodyColor:'#94a3b8',
+        padding:12,cornerRadius:8,callbacks:{label:c=>'  '+c.dataset.label+': '+fmtNum(c.parsed.y)}
+      }},
+      scales:{x:{grid:{color:GRID},ticks:{maxTicksLimit:12}},y:{grid:{color:GRID},ticks:{callback:fmtTick},beginAtZero:false}}
+    }
+  });
+}
+
+function buildTable(data){
+  const tbody=document.getElementById('predTbody');
+  tbody.innerHTML='';
+  const mx=Math.max(...data.predictions);
+  data.predictions.forEach((v,i)=>{
+    const prev=i===0?((_fullActual?_fullActual.values[_fullActual.values.length-1]:v)||v):data.predictions[i-1];
+    const diff=v-prev, pct=prev?((diff/prev)*100).toFixed(1):'0.0';
+    const pctW=((v/mx)*100).toFixed(1);
+    let badge=diff>0
+      ?`<span class="tbadge up"><i class="fa-solid fa-caret-up"></i>+${pct}%</span>`
+      :diff<0
+      ?`<span class="tbadge dn"><i class="fa-solid fa-caret-down"></i>${pct}%</span>`
+      :`<span class="tbadge fl">Stable</span>`;
+    let trend=diff>0
+      ?`<span style="color:#16a34a;font-weight:600">↑ Rising</span>`
+      :diff<0
+      ?`<span style="color:#dc2626;font-weight:600">↓ Falling</span>`
+      :`<span style="color:#64748b">→ Stable</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-idx">${String(i+1).padStart(2,'0')}</td>
+      <td><strong>${data.labels[i]}</strong></td>
+      <td><strong style="font-size:15px">${fmtNum(v)}</strong></td>
+      <td>${badge}</td><td>${trend}</td>
+      <td><div class="mb-row"><div class="mb-bg"><div class="mb-fg" style="width:${pctW}%"></div></div><span class="mb-pct">${pctW}%</span></div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function exportCSV(){
+  if(!_fcData){showToast('Run a forecast first.',true);return;}
+  const rows=[['Month','Predicted Sales']];
+  _fcData.labels.forEach((l,i)=>rows.push([l,_fcData.predictions[i]]));
+  const a=Object.assign(document.createElement('a'),{
+    href:'data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n')),
+    download:'salescast_forecast.csv'
+  });
+  a.click(); showToast('Forecast exported!');
+}
+</script>
+{% endblock %}

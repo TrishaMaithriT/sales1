@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero blue-hero">
+  <div class="container">
+    <span class="eyebrow light">Step 2 of 3</span>
+    <h1>Sales Analytics Dashboard</h1>
+    <p>Your model is trained. Explore statistics and performance charts below.</p>
+  </div>
+</div>
+
+<section class="section bg-gray">
+  <div class="container">
+
+    <!-- ── KPI Row ── -->
+    <div class="kpi-row">
+      <div class="kpi blue">
+        <div class="kpi-top"><span class="kpi-lbl">Total Revenue</span><div class="kpi-ico"><i class="fa-solid fa-sack-dollar"></i></div></div>
+        <p class="kpi-val" id="kTotal">—</p>
+        <p class="kpi-sub">{{ data.row_count }} months of data</p>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-top"><span class="kpi-lbl">Model Accuracy (R²)</span><div class="kpi-ico green"><i class="fa-solid fa-bullseye"></i></div></div>
+        <p class="kpi-val">{{ data.metrics.r2 }}%</p>
+        <p class="kpi-sub">Linear Regression performance</p>
+      </div>
+      <div class="kpi purple">
+        <div class="kpi-top"><span class="kpi-lbl">Mean Absolute Error</span><div class="kpi-ico purple"><i class="fa-solid fa-ruler"></i></div></div>
+        <p class="kpi-val" id="kMAE">₹{{ "{:,.0f}".format(data.metrics.mae) }}</p>
+        <p class="kpi-sub">Average prediction deviation</p>
+      </div>
+      <div class="kpi orange">
+        <div class="kpi-top"><span class="kpi-lbl">Sales Growth</span><div class="kpi-ico orange"><i class="fa-solid fa-arrow-trend-up"></i></div></div>
+        <p class="kpi-val" id="kGrowth">—</p>
+        <p class="kpi-sub">First vs last period</p>
+      </div>
+    </div>
+
+    <!-- ── Charts ── -->
+    <div class="charts-grid">
+      <div class="card chart-card">
+        <div class="card-hdr">
+          <div class="card-ico blue"><i class="fa-solid fa-chart-line"></i></div>
+          <div><h3 class="card-ttl">Sales History</h3><p class="card-sub">Historical monthly revenue trend</p></div>
+          <span class="cbadge blue">Historical</span>
+        </div>
+        <div class="chart-box"><canvas id="histChart"></canvas></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="card-hdr">
+          <div class="card-ico green"><i class="fa-solid fa-code-compare"></i></div>
+          <div><h3 class="card-ttl">Actual vs Predicted</h3><p class="card-sub">Model prediction accuracy</p></div>
+          <span class="cbadge green">Comparison</span>
+        </div>
+        <div class="chart-box"><canvas id="cmpChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ── Model Summary Table ── -->
+    <div class="card" style="margin-top:0">
+      <div class="card-hdr">
+        <div class="card-ico purple"><i class="fa-solid fa-table"></i></div>
+        <div><h3 class="card-ttl">Model Summary</h3><p class="card-sub">Training configuration and results</p></div>
+      </div>
+      <div class="summary-table">
+        <div class="sum-row"><span>Algorithm</span><strong>Linear Regression</strong></div>
+        <div class="sum-row"><span>Features Used</span><strong>Time Index, Lag-1, Lag-2, Lag-3, Rolling Mean (3)</strong></div>
+        <div class="sum-row"><span>Training Split</span><strong>80% Train / 20% Test</strong></div>
+        <div class="sum-row"><span>Date Column</span><strong>{{ data.date_col }}</strong></div>
+        <div class="sum-row"><span>Sales Column</span><strong>{{ data.sales_col }}</strong></div>
+        <div class="sum-row"><span>Total Records</span><strong>{{ data.row_count }}</strong></div>
+        <div class="sum-row"><span>R² Score</span><strong style="color:#2563eb">{{ data.metrics.r2 }}%</strong></div>
+        <div class="sum-row"><span>MAE</span><strong>{{ data.metrics.mae }}</strong></div>
+        <div class="sum-row"><span>RMSE</span><strong>{{ data.metrics.rmse }}</strong></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:28px">
+      <a href="{{ url_for('forecast_page') }}" class="btn btn-primary btn-lg">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Go to Forecast Page
+      </a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const FULL = {{ data.full_actual | tojson }};
+const HIST = {{ data.historical  | tojson }};
+const GRID = 'rgba(0,0,0,0.04)';
+
+// KPI: Total Sales, MAE, Growth
+(function(){
+  const v   = FULL.values;
+  const mae = {{ data.metrics.mae }};
+  const rmse= {{ data.metrics.rmse }};
+
+  // Total revenue
+  document.getElementById('kTotal').textContent  = fmtNum(v.reduce((a,b)=>a+b,0));
+
+  // MAE
+  document.getElementById('kMAE').textContent    = fmtNum(mae);
+
+  // Growth first → last
+  if(v && v.length > 1){
+    const g = ((v[v.length-1] - v[0]) / v[0] * 100).toFixed(1);
+    document.getElementById('kGrowth').textContent = (g > 0 ? '+' : '') + g + '%';
+  }
+})();
+
+// Sales history chart
+new Chart(document.getElementById('histChart'),{
+  type:'line',
+  data:{labels:FULL.labels,datasets:[{
+    label:'Monthly Sales',data:FULL.values,
+    borderColor:'#2563eb',backgroundColor:hexA('#2563eb',.08),
+    fill:true,tension:.4,borderWidth:2.5,
+    pointRadius:FULL.values.length>50?0:4,pointHoverRadius:6
+  }]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:false},tooltip:{
+      backgroundColor:'rgba(15,23,42,.95)',borderColor:'rgba(255,255,255,.08)',borderWidth:1,
+      titleColor:'#f8fafc',bodyColor:'#94a3b8',padding:12,cornerRadius:8,
+      callbacks:{label:c=>'  Sales: '+fmtNum(c.parsed.y)}
+    }},
+    scales:{
+      x:{grid:{color:GRID},ticks:{maxTicksLimit:12}},
+      y:{grid:{color:GRID},ticks:{callback:fmtTick},beginAtZero:false}
+    }
+  }
+});
+
+// Actual vs Predicted chart
+new Chart(document.getElementById('cmpChart'),{
+  type:'line',
+  data:{labels:HIST.labels,datasets:[
+    {label:'Actual',data:HIST.actual,borderColor:'#22c55e',backgroundColor:hexA('#22c55e',.07),fill:true,tension:.35,borderWidth:2.5,pointRadius:HIST.actual.length>50?0:4},
+    {label:'Predicted',data:HIST.predicted,borderColor:'#f97316',backgroundColor:'transparent',borderDash:[5,3],tension:.35,borderWidth:2,pointRadius:HIST.predicted.length>50?0:4}
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{usePointStyle:true,padding:14}},tooltip:{
+      backgroundColor:'rgba(15,23,42,.95)',borderColor:'rgba(255,255,255,.08)',borderWidth:1,
+      titleColor:'#f8fafc',bodyColor:'#94a3b8',padding:12,cornerRadius:8,
+      callbacks:{label:c=>'  '+c.dataset.label+': '+fmtNum(c.parsed.y)}
+    }},
+    scales:{
+      x:{grid:{color:GRID},ticks:{maxTicksLimit:12}},
+      y:{grid:{color:GRID},ticks:{callback:fmtTick},beginAtZero:false}
+    }
+  }
+});
+</script>
+{% endblock %}

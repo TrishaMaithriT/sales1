@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-bg-grid"></div>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+  <div class="hero-body container">
+    <div class="hero-text">
+      <div class="hero-eyebrow">
+        <span class="dot-green"></span> AI-Powered &bull; Linear Regression &bull; Real-Time Forecasting
+      </div>
+      <h1 class="hero-h1">
+        Predict Your Future Sales<br/>
+        <span class="grad-text">with Machine Learning</span>
+      </h1>
+      <p class="hero-p">
+        Upload your historical sales CSV, train a Linear Regression model in one click,
+        and get accurate monthly forecasts — no coding needed.
+      </p>
+      <div class="hero-btns">
+        <a href="{{ url_for('upload_page') }}" class="btn btn-primary btn-lg">
+          <i class="fa-solid fa-rocket"></i> Get Started Free
+        </a>
+        <a href="{{ url_for('about') }}" class="btn btn-ghost btn-lg">
+          <i class="fa-solid fa-circle-play"></i> How It Works
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="hs"><strong>95%+</strong><span>Accuracy</span></div>
+        <div class="hs-div"></div>
+        <div class="hs"><strong>24 mo</strong><span>Forecast</span></div>
+        <div class="hs-div"></div>
+        <div class="hs"><strong>1-Click</strong><span>Training</span></div>
+        <div class="hs-div"></div>
+        <div class="hs"><strong>Free</strong><span>Forever</span></div>
+      </div>
+    </div>
+
+    <!-- Hero preview card -->
+    <div class="hero-card-wrap">
+      <div class="hero-card">
+        <div class="hc-top">
+          <div class="hc-dots"><span></span><span></span><span></span></div>
+          <span class="hc-label">Sales Forecast Preview</span>
+        </div>
+        <div class="hc-chart-box"><canvas id="heroChart"></canvas></div>
+        <div class="hc-stats">
+          <div class="hcs"><span class="hcs-v">+24.8%</span><span class="hcs-l">Growth</span></div>
+          <div class="hcs"><span class="hcs-v green">97.2%</span><span class="hcs-l">R² Score</span></div>
+          <div class="hcs"><span class="hcs-v">12 mo</span><span class="hcs-l">Forecast</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<section class="section bg-white">
+  <div class="container">
+    <div class="sec-hdr">
+      <span class="eyebrow">Why SalesCast?</span>
+      <h2 class="sec-title">Everything You Need to Forecast Sales</h2>
+      <p class="sec-desc">A complete machine learning pipeline from raw data to actionable predictions.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-ico blue"><i class="fa-solid fa-brain"></i></div>
+        <h3>Linear Regression ML</h3>
+        <p>Trained on lag features and rolling means for accurate time-series forecasting.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-ico green"><i class="fa-solid fa-file-csv"></i></div>
+        <h3>Simple CSV Upload</h3>
+        <p>Drag & drop any CSV. Auto-detects your date and sales columns instantly.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-ico purple"><i class="fa-solid fa-chart-area"></i></div>
+        <h3>Live Interactive Charts</h3>
+        <p>Beautiful Chart.js visuals — history, actual vs predicted, and future forecasts.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-ico orange"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <h3>24-Month Forecast</h3>
+        <p>Predict up to two years ahead and export results as a CSV report.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══ -->
+<section class="section bg-gray">
+  <div class="container">
+    <div class="sec-hdr">
+      <span class="eyebrow">Simple Process</span>
+      <h2 class="sec-title">From Data to Forecast in 3 Steps</h2>
+    </div>
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-ico"><i class="fa-solid fa-upload"></i></div>
+        <h3>Upload Your Data</h3>
+        <p>Go to Upload Data and drag & drop your historical sales CSV file.</p>
+        <a href="{{ url_for('upload_page') }}" class="step-link">Upload now <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-ico green"><i class="fa-solid fa-microchip"></i></div>
+        <h3>Train the Model</h3>
+        <p>Click Train and our Linear Regression model learns from your data instantly.</p>
+        <a href="{{ url_for('dashboard') }}" class="step-link">View dashboard <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+      <div class="step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-ico purple"><i class="fa-solid fa-chart-line"></i></div>
+        <h3>Get Predictions</h3>
+        <p>See forecasts up to 24 months ahead and download the full report.</p>
+        <a href="{{ url_for('forecast_page') }}" class="step-link">Run forecast <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA BANNER ══ -->
+<section class="cta-banner">
+  <div class="container">
+    <h2>Ready to Forecast Your Sales?</h2>
+    <p>Upload your data and get predictions in under 30 seconds.</p>
+    <a href="{{ url_for('upload_page') }}" class="btn btn-white btn-lg">
+      <i class="fa-solid fa-file-csv"></i> Upload CSV Now
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  const ctx = document.getElementById('heroChart');
+  const labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const vals   = [18200,19500,21000,22400,24100,28500,23200,24800,26500,27900,29400,32100];
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        data:vals,
+        borderColor:'#60a5fa',
+        backgroundColor:'rgba(96,165,250,0.15)',
+        fill:true,tension:.4,borderWidth:2.5,pointRadius:0
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false,beginAtZero:false}},
+      animation:{duration:2000}
+    }
+  });
+})();
+</script>
+{% endblock %}

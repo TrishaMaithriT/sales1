@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+
+{% block content %}
+<div class="page-hero blue-hero">
+  <div class="container">
+    <span class="eyebrow light">About this Project</span>
+    <h1>SalesCast — AI Sales Prediction System</h1>
+    <p>A complete machine learning project built with Python, Flask, and Linear Regression.</p>
+  </div>
+</div>
+
+<!-- ── Project Overview (no tech stack card) ── -->
+<section class="section bg-white">
+  <div class="container">
+    <div class="about-single-col">
+      <span class="eyebrow">Project Overview</span>
+      <h2 class="sec-title">What is SalesCast?</h2>
+      <p class="about-p">SalesCast is a complete end-to-end <strong>Machine Learning web application</strong> that allows businesses to upload historical sales data and receive accurate future sales predictions using the <strong>Linear Regression</strong> algorithm.</p>
+      <p class="about-p">The system uses time-series feature engineering — including lag values and rolling averages — to capture sales trends and seasonality patterns in your data.</p>
+
+      <h3 style="margin:28px 0 14px;font-size:17px;color:#1e293b">Project Objectives</h3>
+      <div class="obj-list">
+        <div class="obj-item"><i class="fa-solid fa-check-circle"></i><span>Enable non-technical users to run ML forecasting without coding</span></div>
+        <div class="obj-item"><i class="fa-solid fa-check-circle"></i><span>Provide accurate sales predictions using proven ML algorithms</span></div>
+        <div class="obj-item"><i class="fa-solid fa-check-circle"></i><span>Visualise model performance with interactive charts</span></div>
+        <div class="obj-item"><i class="fa-solid fa-check-circle"></i><span>Export forecast reports in CSV format</span></div>
+        <div class="obj-item"><i class="fa-solid fa-check-circle"></i><span>Deliver a professional multi-page web interface</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ML Pipeline ── -->
+<section class="section bg-gray">
+  <div class="container">
+    <div class="sec-hdr">
+      <span class="eyebrow">ML Pipeline</span>
+      <h2 class="sec-title">How the Machine Learning Works</h2>
+      <p class="sec-desc">A complete feature engineering and model training pipeline under the hood.</p>
+    </div>
+
+    <div class="ml-pipeline">
+      <div class="ml-step">
+        <div class="ml-num">1</div>
+        <div class="ml-box">
+          <h4><i class="fa-solid fa-file-csv"></i> Data Ingestion</h4>
+          <p>CSV is parsed, column headers are auto-detected (date + sales), and values are sorted chronologically.</p>
+        </div>
+      </div>
+      <div class="ml-arr"><i class="fa-solid fa-arrow-down"></i></div>
+      <div class="ml-step">
+        <div class="ml-num">2</div>
+        <div class="ml-box">
+          <h4><i class="fa-solid fa-wrench"></i> Feature Engineering</h4>
+          <p>5 features are built per record: <strong>time index</strong>, <strong>Lag-1</strong>, <strong>Lag-2</strong>, <strong>Lag-3</strong>, and <strong>Rolling Mean (3 periods)</strong>.</p>
+        </div>
+      </div>
+      <div class="ml-arr"><i class="fa-solid fa-arrow-down"></i></div>
+      <div class="ml-step">
+        <div class="ml-num">3</div>
+        <div class="ml-box">
+          <h4><i class="fa-solid fa-scale-balanced"></i> Scaling &amp; Splitting</h4>
+          <p>MinMaxScaler normalises values to [0,1]. Data is split 80% train / 20% test for unbiased evaluation.</p>
+        </div>
+      </div>
+      <div class="ml-arr"><i class="fa-solid fa-arrow-down"></i></div>
+      <div class="ml-step">
+        <div class="ml-num">4</div>
+        <div class="ml-box">
+          <h4><i class="fa-solid fa-brain"></i> Model Training</h4>
+          <p>Scikit-learn <code>LinearRegression</code> is fitted on the training set. Predictions are inverse-scaled back to original units.</p>
+        </div>
+      </div>
+      <div class="ml-arr"><i class="fa-solid fa-arrow-down"></i></div>
+      <div class="ml-step">
+        <div class="ml-num">5</div>
+        <div class="ml-box">
+          <h4><i class="fa-solid fa-chart-line"></i> Forecasting</h4>
+          <p>Future months are predicted iteratively — each prediction becomes a lag input for the next month.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Key Features Section ── -->
+<section class="section bg-white">
+  <div class="container">
+    <div class="sec-hdr">
+      <span class="eyebrow">Features</span>
+      <h2 class="sec-title">What This System Can Do</h2>
+      <p class="sec-desc">Everything you need to forecast sales — in one clean, easy-to-use web app.</p>
+    </div>
+    <div class="feat-grid-about">
+      <div class="card feat-card-about">
+        <div class="feat-ico-about blue"><i class="fa-solid fa-upload"></i></div>
+        <h4>CSV Upload</h4>
+        <p>Drag &amp; drop your historical sales CSV file — the system auto-detects date and sales columns.</p>
+      </div>
+      <div class="card feat-card-about">
+        <div class="feat-ico-about green"><i class="fa-solid fa-brain"></i></div>
+        <h4>Auto ML Training</h4>
+        <p>Linear Regression model trains instantly with feature engineering — no coding required.</p>
+      </div>
+      <div class="card feat-card-about">
+        <div class="feat-ico-about purple"><i class="fa-solid fa-chart-line"></i></div>
+        <h4>Interactive Charts</h4>
+        <p>Beautiful visualisations for sales history, actual vs predicted, and forecasts.</p>
+      </div>
+      <div class="card feat-card-about">
+        <div class="feat-ico-about orange"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <h4>Future Forecasting</h4>
+        <p>Predict up to 24 months into the future with an interactive slider control.</p>
+      </div>
+      <div class="card feat-card-about">
+        <div class="feat-ico-about pink"><i class="fa-solid fa-download"></i></div>
+        <h4>Export CSV</h4>
+        <p>Download your forecast results as a CSV file for use in Excel or reports.</p>
+      </div>
+      <div class="card feat-card-about">
+        <div class="feat-ico-about teal"><i class="fa-solid fa-mobile-screen"></i></div>
+        <h4>Fully Responsive</h4>
+        <p>Works perfectly on desktop, tablet, and mobile — no app installation needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <div class="container">
+    <h2>Try It Now — It's Free</h2>
+    <p>Upload your sales data and get predictions in under 30 seconds.</p>
+    <a href="{{ url_for('upload_page') }}" class="btn btn-white btn-lg">
+      <i class="fa-solid fa-rocket"></i> Start Forecasting
+    </a>
+  </div>
+</section>
+{% endblock %}

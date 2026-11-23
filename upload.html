@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Upload Data{% endblock %}
+
+{% block content %}
+<div class="page-hero blue-hero">
+  <div class="container">
+    <span class="eyebrow light">Step 1 of 3</span>
+    <h1>Upload Your Sales Data</h1>
+    <p>Use the pre-loaded sample dataset with one click, or upload your own CSV file.</p>
+  </div>
+</div>
+
+<section class="section bg-gray">
+  <div class="container">
+
+    <!-- ══ ONE-CLICK SAMPLE BANNER ══ -->
+    <div class="sample-banner">
+      <div class="sample-banner-left">
+        <div class="sb-icon"><i class="fa-solid fa-bolt"></i></div>
+        <div>
+          <h3>Try with Pre-loaded Sample Data</h3>
+          <p>36 months of realistic sales data (2021–2023) — ready to train instantly. No upload needed.</p>
+          <div class="sb-preview">
+            <span><i class="fa-solid fa-calendar"></i> 36 months</span>
+            <span><i class="fa-solid fa-chart-line"></i> Growing trend</span>
+            <span><i class="fa-solid fa-dollar-sign"></i> ₹45K–₹215K range</span>
+            <span><i class="fa-solid fa-clock"></i> 2021 – 2023</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-sample" id="sampleBtn" onclick="useSample()">
+        <i class="fa-solid fa-rocket"></i> Use Sample Data &amp; Train
+      </button>
+    </div>
+
+    <!-- Divider -->
+    <div class="or-divider"><span>or upload your own CSV</span></div>
+
+    <div class="upload-layout">
+      <!-- ── Upload card ── -->
+      <div class="card upload-main-card">
+        <div class="card-hdr">
+          <div class="card-ico blue"><i class="fa-solid fa-file-import"></i></div>
+          <div>
+            <h2 class="card-ttl">Import Your CSV File</h2>
+            <p class="card-sub">Needs at least a date column and a sales/revenue column</p>
+          </div>
+        </div>
+
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('csvFile').click()">
+          <input type="file" id="csvFile" accept=".csv" hidden/>
+          <div class="dz-inner" id="dzInner">
+            <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <p class="dz-title">Drag &amp; drop your CSV here</p>
+            <p class="dz-hint">or <span class="link-blue">click to browse</span></p>
+          </div>
+          <div class="dz-ready hidden" id="dzReady">
+            <i class="fa-solid fa-file-csv" style="font-size:32px;color:#2563eb"></i>
+            <p id="dzFileName" class="dz-fname">file.csv</p>
+            <p class="dz-hint" style="color:#22c55e;margin-top:4px"><i class="fa-solid fa-circle-check"></i> Ready to train</p>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="prog-wrap hidden" id="progWrap">
+          <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+          <p class="prog-label" id="progLabel">Processing...</p>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="trainBtn" onclick="trainModel()" disabled>
+          <i class="fa-solid fa-microchip"></i> Train Model with My CSV
+        </button>
+
+        <div style="text-align:center;margin-top:12px">
+          <a href="{{ url_for('static', filename='sample_sales.csv') }}" download class="sample-dl">
+            <i class="fa-solid fa-download"></i> Download sample CSV to inspect
+          </a>
+        </div>
+      </div>
+
+      <!-- ── Side info ── -->
+      <div class="upload-side">
+        <div class="card info-card dark-card">
+          <h3><i class="fa-solid fa-circle-info"></i> CSV Format Guide</h3>
+          <div class="csv-example">
+            <div class="csv-row csv-head"><span>Date</span><span>Sales</span></div>
+            <div class="csv-row"><span>2023-01-01</span><span>45200</span></div>
+            <div class="csv-row"><span>2023-02-01</span><span>47800</span></div>
+            <div class="csv-row"><span>2023-03-01</span><span>52300</span></div>
+            <div class="csv-row muted-row"><span>...</span><span>...</span></div>
+          </div>
+          <ul class="csv-rules">
+            <li><i class="fa-solid fa-check"></i> At least 6 rows of data</li>
+            <li><i class="fa-solid fa-check"></i> One date/month column</li>
+            <li><i class="fa-solid fa-check"></i> One sales/revenue column</li>
+            <li><i class="fa-solid fa-check"></i> Headers auto-detected</li>
+            <li><i class="fa-solid fa-check"></i> Max file size: 16 MB</li>
+          </ul>
+        </div>
+
+        <div class="card pipeline-card">
+          <h3>Training Pipeline</h3>
+          <div class="pipeline-steps">
+            <div class="pl-step"><div class="pl-num">1</div><div><strong>Parse CSV</strong><p>Read and clean your data</p></div></div>
+            <div class="pl-step"><div class="pl-num">2</div><div><strong>Extract Features</strong><p>Lag-1, Lag-2, Lag-3, Rolling Mean</p></div></div>
+            <div class="pl-step"><div class="pl-num">3</div><div><strong>Train Model</strong><p>Linear Regression on 80% data</p></div></div>
+            <div class="pl-step"><div class="pl-num">4</div><div><strong>Evaluate</strong><p>MAE, RMSE, R² on test set</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const dz  = document.getElementById('dropzone');
+const inp = document.getElementById('csvFile');
+
+dz.addEventListener('dragover',  e=>{e.preventDefault();dz.classList.add('dz-over');});
+dz.addEventListener('dragleave', ()=>dz.classList.remove('dz-over'));
+dz.addEventListener('drop', e=>{
+  e.preventDefault(); dz.classList.remove('dz-over');
+  if(e.dataTransfer.files[0]){ inp.files=e.dataTransfer.files; onFile(); }
+});
+inp.addEventListener('change', onFile);
+
+function onFile(){
+  const f=inp.files[0]; if(!f) return;
+  document.getElementById('dzInner').classList.add('hidden');
+  document.getElementById('dzReady').classList.remove('hidden');
+  document.getElementById('dzFileName').textContent = f.name;
+  document.getElementById('trainBtn').disabled = false;
+}
+
+function showProgress(msg, pct){
+  document.getElementById('progWrap').classList.remove('hidden');
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('progLabel').textContent = msg;
+}
+
+/* ── Use built-in sample data ── */
+async function useSample(){
+  const btn = document.getElementById('sampleBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Training on sample data...';
+
+  showProgress('Loading pre-built sample dataset...', 30);
+  await new Promise(r=>setTimeout(r,400));
+  showProgress('Training Linear Regression model...', 65);
+
+  const res  = await fetch('/api/use_sample', {method:'POST'});
+  const data = await res.json();
+
+  if(!res.ok || data.error){
+    btn.disabled=false;
+    btn.innerHTML='<i class="fa-solid fa-rocket"></i> Use Sample Data & Train';
+    document.getElementById('progWrap').classList.add('hidden');
+    showToast(data.error||'Failed to load sample.',true);
+    return;
+  }
+
+  showProgress('Model ready! Accuracy R² = '+data.metrics.r2+'% — Redirecting...', 100);
+  showToast('Model trained on sample data! R² = '+data.metrics.r2+'%');
+  setTimeout(()=>{ window.location.href = data.redirect; }, 1000);
+}
+
+/* ── Upload own CSV ── */
+async function trainModel(){
+  const f=inp.files[0]; if(!f){ showToast('Select a CSV first.',true); return; }
+  document.getElementById('trainBtn').disabled=true;
+
+  const steps=[
+    [20,'Uploading file...'],
+    [45,'Parsing CSV...'],
+    [70,'Training Linear Regression...'],
+    [90,'Evaluating model...'],
+    [100,'Done! Redirecting...']
+  ];
+  let si=0;
+  const iv=setInterval(()=>{
+    if(si<steps.length){ showProgress(steps[si][0]+'%... '+steps[si][1], steps[si][0]); si++; }
+    else clearInterval(iv);
+  },350);
+
+  const form=new FormData(); form.append('file',f);
+  const res=await fetch('/api/upload',{method:'POST',body:form});
+  const data=await res.json();
+  clearInterval(iv);
+
+  if(!res.ok||data.error){
+    document.getElementById('progWrap').classList.add('hidden');
+    document.getElementById('trainBtn').disabled=false;
+    showToast(data.error||'Upload failed.',true);
+    return;
+  }
+  showProgress('Model trained! R²='+data.metrics.r2+'% — Redirecting...', 100);
+  showToast('Model trained! R² = '+data.metrics.r2+'%');
+  setTimeout(()=>{ window.location.href=data.redirect; }, 1200);
+}
+</script>
+{% endblock %}
